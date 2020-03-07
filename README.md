@@ -1,8 +1,8 @@
 # 文档地址
 
-- [员工端](http://htmlpreview.github.io/?https://github.com/youyingxiang/apidoc/blob/master/docs/staff-client.html)
+- [员工端](https://youyingxiang.github.io/apidoc/docs/staff-client.html)
 
-- [活动端](http://htmlpreview.github.io/?https://github.com/youyingxiang/apidoc/blob/master/docs/yun-client.html)
+- [活动端](https://youyingxiang.github.io/apidoc/docs/yun-client.html)
 
 # 这是什么？
 

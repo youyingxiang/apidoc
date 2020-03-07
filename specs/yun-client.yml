@@ -1,0 +1,2171 @@
+openapi: 3.0.0
+
+info:
+  version: "0.0.1"
+  title: 活动端api
+  description: 活动端api协议
+
+paths:
+  /common/v1/configs/wechat:
+    get:
+      summary: 获取微信sdk配置，参见：https://developers.weixin.qq.com/doc/offiaccount/OA_Web_Apps/JS-SDK.html#4
+      parameters:
+        - name: url
+          in: query
+          description: 需要使用配置的网页地址
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WechatConfig"
+
+  /common/v1/activities/{activity_id}/sms:
+    post:
+      summary: 当前用户请求发送手机验证码（接口需登录，被攻击的话，可以把用户加入黑名单）
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/SmsData"
+      responses:
+        "200":
+          description: 成功
+
+  /yun/v1/user_info:
+    get:
+      summary: 获取用户信息
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserInfo"
+        "401":
+          description: 用户未登录
+
+  /yun/v1/user_info/{uid}:
+    get:
+      summary: 根据id获取用户信息
+      parameters:
+        - name: uid
+          in: path
+          description: 用户ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserInfo"
+        "404":
+          description: 无此用户
+
+  /yun/v1/activities/{activity_id}:
+    get:
+      summary: 获取指定活动
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Activity"
+        "404":
+          description: 活动不存在
+
+  /yun/v1/activities/{activity_id}/location:
+    post:
+      summary: 设置当前用户地理位置信息
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/Location"
+      responses:
+        "200":
+          description: 设置成功
+
+  /yun/v1/activities/{activity_id}/user_actions:
+    get:
+      summary: 获取指定活动的用户动态
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: number
+          in: query
+          description: 动态的条数
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: array
+                minItems: 60
+                items:
+                  $ref: "#/components/schemas/UserAction"
+                example: [
+                {
+                  avatar_url: "",
+                  name: "石头",
+                  action: "join_activity",
+                },
+                {
+                  avatar_url: "",
+                  name: "狼哥",
+                  action: "purchase_seckill_product",
+                },
+                {
+                  avatar_url: "",
+                  name: "鸡哥",
+                  action: "reserve_live",
+                },
+                {
+                  avatar_url: "",
+                  name: "石头2019",
+                  action: "join_activity",
+                },
+                {
+                  avatar_url: "",
+                  name: "狼哥2019",
+                  action: "purchase_seckill_product",
+                },
+                {
+                  avatar_url: "",
+                  name: "鸡哥2019",
+                  action: "reserve_live",
+                }
+                ]
+
+  /yun/v1/activities/{activity_id}/seckill_products:
+    get:
+      summary: 获取指定活动秒杀品
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: array
+                minItems: 6
+                items:
+                  $ref: "#/components/schemas/SeckillProduct"
+
+  /yun/v1/activities/{activity_id}/seckill_products/{product_id}:
+    post:
+      summary: 指定活动秒杀品下单
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: product_id
+          in: path
+          description: 产品ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 成功
+
+  /yun/v1/activities/{activity_id}/collects:
+    post:
+      summary: 指定活动集赞下单
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 成功
+
+  /yun/v1/activities/{activity_id}/reserve:
+    get:
+      summary: 预约直播
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: redirect
+          in: query
+          description: 回跳地址
+          required: true
+          schema:
+            type: string
+      responses:
+        "301":
+          description: 跳转微信地址
+          headers:
+            Location:
+              description: 微信地址
+              schema:
+                type: string
+
+  /yun/v1/activities/{activity_id}/sign_up:
+    post:
+      summary: 当前用户在当前活动中进行注册
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/SignupInfo"
+      responses:
+        "200":
+          description: 成功
+
+  /yun/v1/activities/{activity_id}/coupons:
+    get:
+      summary: 获取指定活动代金券
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CouponData"
+
+  /yun/v1/activities/{activity_id}/coupons/pay:
+    post:
+      summary: 获取代金券的微信支付参数
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: from_uid
+          in: query
+          description: 活动ID
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WechatPayload"
+
+  /yun/v1/activities/{activity_id}/seckill_orders:
+    get:
+      summary: 获取指定活动当前用户的秒杀品订单列表
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: array
+                minItems: 10
+                items:
+                  $ref: "#/components/schemas/SeckillOrderSummary"
+
+  /yun/v1/activities/{activity_id}/seckill_orders/{seckill_order_id}:
+    get:
+      summary: 获取指定活动的秒杀品订单详情
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: seckill_order_id
+          in: path
+          description: 秒杀订单ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SeckillOrder"
+    post:
+      summary: 当前用户为秒杀订单助力（不能给自己的单子助力，一人一订单助力一次）
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: seckill_order_id
+          in: path
+          description: 秒杀订单ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 成功
+
+  /yun/v1/activities/{activity_id}/seckill_orders/{seckill_order_id}/pay:
+    post:
+      summary: 获取秒杀订单的微信支付参数（订单状态需为paying）
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: seckill_order_id
+          in: path
+          description: 秒杀订单ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WechatPayload"
+
+  /yun/v1/activities/{activity_id}/seckill_orders/{seckill_order_id}/write_off:
+    post:
+      summary: 秒杀订单核销
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: seckill_order_id
+          in: path
+          description: 秒杀订单ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/WriteOffData"
+      responses:
+        "200":
+          description: 查询成功
+
+  /yun/v1/activities/{activity_id}/collect_orders/{collect_order_id}:
+    get:
+      summary: 获取指定活动的集赞订单详情
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: collect_order_id
+          in: path
+          description: 集赞订单ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CollectOrder"
+    post:
+      summary: 当前用户为集赞订单助力（不能给自己的单子助力，一人一订单助力一次）
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: collect_order_id
+          in: path
+          description: 集赞订单ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 成功
+
+  /yun/v1/activities/{activity_id}/collect_orders/{collect_order_id}/write_off:
+    post:
+      summary: 集赞订单核销
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: collect_order_id
+          in: path
+          description: 集赞订单ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/WriteOffData"
+      responses:
+        "200":
+          description: 成功
+
+  /yun/v1/activities/{activity_id}/merchants:
+    get:
+      summary: 获取指定活动的商户信息
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: array
+                minItems: 8
+                items:
+                  $ref: "#/components/schemas/Merchant"
+
+  /yun/v1/activities/{activity_id}/my/views:
+    get:
+      summary: 我的邀请浏览明细
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: offset
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+        - name: limit
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MyView"
+
+  /yun/v1/activities/{activity_id}/my/coupons:
+    get:
+      summary: 我的售券明细
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: offset
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+        - name: limit
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MyCoupon"
+
+  /yun/v1/activities/{activity_id}/my/reward_records:
+    get:
+      summary: 我的奖励明细
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: offset
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+        - name: limit
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MyRewardRecord"
+
+  /yun/v1/activities/{activity_id}/my/seckill_orders:
+    get:
+      summary: 我的秒杀订单（已支付，目前每用户只能有一个成功秒杀）
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: offset
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+        - name: limit
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MyOrder"
+
+  /room/v1/stream/push_callback:
+    post:
+      summary: 第三方推流回调接口, 无定式
+      responses:
+        "200":
+          description: 成功响应
+        default:
+          $ref: "#/components/responses/Default"
+  /room/v1/room/get_room_info:
+    get:
+      summary: 获取直播间信息
+      parameters:
+        - name: activity_id
+          in: query
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: room_id
+          in: query
+          schema:
+            type: integer
+          description: 房间id
+          required: true
+        - name: play_format
+          in: query
+          schema:
+            type: string
+          description: 格式hls或者flv,默认flv
+          required: false
+      responses:
+        "200":
+          description: 返回房间信息
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/live_Room_GetRoomInfo"
+        default:
+          $ref: "#/components/responses/Default"
+
+  /room/v1/room/send_message:
+    post:
+      summary: 发送消息 需要登录态
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: ["activity_id", "room_id", "content"]
+              properties:
+                activity_id:
+                  $ref: "#/components/schemas/Id"
+                room_id:
+                  type: integer
+                  description: 房间id
+                content:
+                  type: string
+                  description: 发送的聊天信息
+
+      responses:
+        "200":
+          description: 发送聊天消息
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  local_only:
+                    type: boolean
+                    description: 是否只在本地显示
+        default:
+          $ref: "#/components/responses/Default"
+
+  /room/v1/room/get_messages:
+      get:
+        summary: 获取最近消息
+        parameters:
+          - name: count
+            in: query
+            schema:
+              type: integer
+            description: 数量
+            required: true
+          - name: room_id
+            in: query
+            schema:
+              type: integer
+            description: 房间id
+            required: true
+        responses:
+          '200':
+            description: "成功响应"
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/LiveMessages"
+          default:
+            $ref: '#/components/responses/Default'
+  /room/v1/room/get_user_info:
+    get:
+      summary: "获取用户信息, 聊天token"
+      parameters:
+        - name: activity_id
+          in: query
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: room_id
+          in: query
+          schema:
+            type: integer
+          description: "房间id"
+          required: true
+      responses:
+        "200":
+          description: 成功响应
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LiveUserInfo"
+        default:
+          $ref: "#/components/responses/Default"
+  /room/v1/gift/send:
+    post:
+      summary: 用户送礼
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: ["activity_id", "gift_id", "room_id", "number"]
+              properties:
+                activity_id:
+                  $ref: "#/components/schemas/Id"
+                gift_id:
+                  type: integer
+                  description: 礼物id
+                room_id:
+                  type: integer
+                  description: 房间id
+                number:
+                  type: integer
+                  description: 礼物数量
+
+      responses:
+        "200":
+          description: 给房间送礼
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/live_Gift_SendGift"
+        default:
+          $ref: "#/components/responses/Default"
+  /room/v1/gift/send_free:
+    post:
+      summary: 用户送免费礼物
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: ["activity_id", "gift_id", "room_id", "number"]
+              properties:
+                activity_id:
+                  $ref: "#/components/schemas/Id"
+                gift_id:
+                  type: integer
+                  description: 礼物id
+                room_id:
+                  type: integer
+                  description: 房间id
+                number:
+                  type: integer
+                  description: 免费礼物数量
+
+      responses:
+        "200":
+          description: 给房间免费送礼
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+        default:
+          $ref: "#/components/responses/Default"
+  /room/v1/redpacket/{id}/grab:
+    post:
+      summary: "抢红包"
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: integer
+          description: 红包id
+          required: true
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: ["activity_id"]
+              properties:
+                activity_id:
+                  $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 成功响应
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  get:
+                    type: boolean
+                    description: 是否抢到红包
+                  reason:
+                    type: string
+                    description: 没抢到红包的原因
+                  amount:
+                    type: integer
+                    description: 抢到的红包金额
+                  merchant_name:
+                    type: string
+                    description: 抢到的红包商家名称
+                  description:
+                    type: string
+                    description: 抢到的红包说明
+        default:
+          $ref: "#/components/responses/Default"
+
+  /room/v1/product/create_order:
+    post:
+      summary: "直播下单"
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: ["activity_id", "product_id"]
+              properties:
+                activity_id:
+                  $ref: "#/components/schemas/Id"
+                product_id:
+                  type: integer
+                  description: 产品id
+      responses:
+        "200":
+          description: 成功响应
+          content:
+            application/json:
+              schema:
+                type: object
+                required: ["pay_params", "order_code"]
+                properties:
+                  pay_params:
+                    $ref: "#/components/schemas/PayParams"
+                  order_code:
+                    type: string
+                    description: 订单号
+        default:
+          $ref: "#/components/responses/Default"
+  /room/v1/medal/fetch:
+    post:
+      summary: "收集勋章"
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: ["activity_id", "merchant_id"]
+              properties:
+                activity_id:
+                  type: integer
+                  description: 活动id
+                merchant_id:
+                  type: integer
+                  description: 商家id
+      responses:
+        "200":
+          description: 成功响应
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+        default:
+          $ref: "#/components/responses/Default"
+  /room/v1/medal/list_user_medals:
+    get:
+      summary: "列出用户勋章"
+      parameters:
+        - name: activity_id
+          in: query
+          schema:
+            type: integer
+          description: 活动id
+          required: true
+      responses:
+        "200":
+          description: 成功响应
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserMedal"
+        default:
+          $ref: "#/components/responses/Default"
+
+  /room/v1/product/get_user_orders:
+    get:
+      summary: "获取直播订单"
+      parameters:
+        - name: activity_id
+          in: query
+          schema:
+            type: integer
+          description: 房间id
+          required: true
+      responses:
+        "200":
+          description: 成功响应
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserOrder"
+        default:
+          $ref: "#/components/responses/Default"
+
+  /room/v1/room/user_withdraw:
+    post:
+      summary: "红包余额提现,注意大于1元才能体"
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: ["activity_id"]
+              properties:
+                activity_id:
+                  $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 成功响应
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+        default:
+          $ref: "#/components/responses/Default"
+  /room/v1/user_feedback/create:
+    post:
+      summary: "提交用户反馈"
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: ["activity_id", "content", "name", "phone"]
+              properties:
+                activity_id:
+                  $ref: "#/components/schemas/Id"
+                content:
+                  type: string
+                  description: "反馈内容"
+                name:
+                  type: string
+                  description: "名字"
+                phone:
+                  type: string
+                  description: "电话"
+      responses:
+        "200":
+          description: 成功响应
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+        default:
+          $ref: "#/components/responses/Default"
+  /room/v1/biz_request/create:
+    post:
+      summary: "提交合作申请"
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: ["activity_id", "name", "company_name"]
+              properties:
+                activity_id:
+                  $ref: "#/components/schemas/Id"
+                name:
+                  type: string
+                  description: "名字"
+                company_name:
+                  type: string
+                  description: "公司名字"
+                phone:
+                  type: string
+                  description: "电话"
+                email:
+                  type: string
+                  description: "邮箱"
+                wechat:
+                  type: string
+                  description: "微信号"
+      responses:
+        "200":
+          description: 成功响应
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+        default:
+          $ref: "#/components/responses/Default"
+  /room/v1/medal/write_off:
+    post:
+      summary: "核销勋章"
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: ["activity_id", "task_id", "staff_wechat_id"]
+              properties:
+                activity_id:
+                  $ref: "#/components/schemas/Id"
+                task_id:
+                  type: integer
+                  description: 勋章任务id
+                staff_wechat_id:
+                  type: integer
+                  description: 员工id
+      responses:
+        '200':
+          description: "成功响应"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+        default:
+          $ref: '#/components/responses/Default'
+components:
+  schemas:
+    Id:
+      type: integer
+      description: id
+
+    UserInfo:
+      type: object
+      required: ["id", "name", "avatar_url"]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        name:
+          type: string
+          description: 用户名称
+          example: "我叫杜晓峰"
+        avatar_url:
+          type: string
+          description: 用户头像
+          example: "http://oolqt5gs6.bkt.clouddn.com/avatar.png"
+
+    Activity:
+      type: object
+      required:
+        [
+          "id",
+          "title",
+          "room_id",
+          "cover_url",
+          "post_url",
+          "wechat_sharing_cover_url",
+          "location",
+          "sub_locations",
+          "related_locations",
+          "live_time",
+          "live_status",
+          "live_days",
+          "start_time",
+          "end_time",
+          "status",
+          "signups",
+          "views",
+          "coupons",
+          "all_coupon_orders",
+          "seckills",
+          "coupon_price",
+          "banners",
+          "reward_info",
+          "current_user_info",
+        ]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        title:
+          type: string
+          description: 活动标题
+        room_id:
+          $ref: "#/components/schemas/Id"
+          description: 直播间id
+        cover_url:
+          type: string
+          description: 活动封面
+          example: "http://oolqt5gs6.bkt.clouddn.com/1571741939285.jpg"
+        wechat_sharing_cover_url:
+          type: string
+          description: 微信分享封面
+          example: "http://oolqt5gs6.bkt.clouddn.com/1571741939285.jpg"
+        wechat_sharing_title:
+          type: string
+          description: 微信分享标题
+        wechat_sharing_description:
+          type: string
+          description: 微信分享描述
+        post_url:
+          type: string
+          description: 业主裂变海报
+          example: "http://oolqt5gs6.bkt.clouddn.com/activity-post.png"
+        location:
+          type: string
+          description: 活动地点
+        sub_locations:
+          type: array
+          description: 子区域
+          items:
+            type: string
+        related_locations:
+          type: array
+          description: 相关区域
+          items:
+            type: string
+        start_time:
+          type: integer
+          description: 开始时间(unix时间戳)
+          example: 1575129600
+        end_time:
+          type: integer
+          description: 结束时间(unix时间戳)
+          example: 1575129600
+        status:
+          type: string
+          description: 活动状态
+          enum:
+            - unstart
+            - started
+            - ended
+          example: "started"
+        live_time:
+          type: integer
+          description: 直播时间(unix时间戳)
+          example: 1575129600
+        live_status:
+          type: integer
+          description: 房间状态 -1 禁播 0未开播 1已经开播 2已经结束
+        live_days:
+          type: integer
+          description: 直播持续天数
+        signups:
+          type: number
+          description: 已报名人数
+        views:
+          type: number
+          description: 已浏览人数
+        coupons:
+          type: number
+          description: 已领取代金券人数
+        all_coupon_orders:
+          type: number
+          description: 所有购买代金券人数（包含已支付+未支付）
+        seckills:
+          type: number
+          description: 已领取秒杀品人数
+        coupon_price:
+          type: number
+          description: 代金券价格
+        banners:
+          type: array
+          description: 首页中间广告图，可多张，每三个秒杀品中插一张
+          items:
+            $ref: "#/components/schemas/Banner"
+          example: [
+          {
+            link: "http://baidu.com",
+            src: "http://oolqt5gs6.bkt.clouddn.com/banner1.png"
+          },
+          {
+            link: "http://baidu.com",
+            src: "http://oolqt5gs6.bkt.clouddn.com/banner2.png"
+          }
+          ]
+        bottom_banner:
+          description: 底部广告图
+          $ref: "#/components/schemas/Banner"
+        collect_banner_url:
+          description: 集赞广告图
+          type: string
+          example: "http://oolqt5gs6.bkt.clouddn.com/collect-banner.png"
+        wechat_customer_service_qrcode_url:
+          type: string
+          description: 微信客服二维码url
+          example: "data:image/png;base64,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"
+        seckill_group_qrcode_url:
+          type: string
+          description: 秒杀群二维码url
+          example: "data:image/png;base64,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"
+        seckill_group_qrcode_name:
+          type: string
+          description: 秒杀群二维码名称
+        signup_group_qrcode_url:
+          type: string
+          description: 报名群二维码url
+          example: "data:image/png;base64,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"
+        signup_group_qrcode_name:
+          type: string
+          description: 报名群二维码名称
+        fission_group_qrcode_url:
+          type: string
+          description: 裂变群二维码url
+          example: "data:image/png;base64,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"
+        fission_group_qrcode_name:
+          type: string
+          description: 裂变群二维码名称
+        reward_info:
+          type: object
+          description: 当前活动的奖励信息
+          required: ["fissions", "views_reward", "extra_reward_numbers", "coupons_reward"]
+          properties:
+            fissions:
+              description: 当前用户有效裂变人数
+              type: number
+              example: 17
+            views_reward:
+              type: string
+              description: 浏览奖励金额
+              example: "0.1元"
+            extra_reward_numbers:
+              type: array
+              items:
+                type: number
+              description: 额外奖励数组
+              example: [5, 15, 50]
+            coupons_reward:
+              type: string
+              description: 售卡奖励金额
+              example: "5.8元"
+        current_user_info:
+          type: object
+          description: 当前已登录的用户信息
+          required: [
+            "signed_up",
+            "can_buy_seckill_product",
+            "bought_coupons",
+            "reserved",
+            "is_staff",
+            "bonus",
+            "views",
+            "fissions",
+            "coupons",
+            "seckills",
+          ]
+          properties:
+            signed_up:
+              description: 是否已注册
+              type: boolean
+              example: false
+            can_buy_seckill_product:
+              description: 是否可以购买秒杀品（目前每个用户只能购买一个秒杀品）
+              type: boolean
+            bought_coupons:
+              description: 是否已领取代金券
+              type: boolean
+            reserved:
+              description: 是否已预约直播
+              type: boolean
+            is_staff:
+              description: 是否是员工
+              type: boolean
+              example: false
+            bonus:
+              description: 推广奖励金额
+              type: number
+            views:
+              description: 浏览人数
+              type: number
+              example: 17
+            coupons:
+              description: 售券数量
+              type: number
+            seckills:
+              description: 秒杀品数量
+              type: number
+            my_collect_order_id:
+              description: 当前用户的集赞订单id，如无集赞可无此字段
+              type: number
+
+    SeckillProduct:
+      type: object
+      description: 秒杀品详情
+      required:
+        [
+          "id",
+          "title",
+          "merchant",
+          "cover_url",
+          "current_price",
+          "original_price",
+          "bought",
+          "left",
+          "specification",
+          "description",
+        ]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        title:
+          type: string
+          description: 标题
+          example: 49801 元汽车空气净化器
+        merchant:
+          $ref: "#/components/schemas/MerchantData"
+        cover_url:
+          type: string
+          description: 封面图
+          example: "http://oolqt5gs6.bkt.clouddn.com/seckill_cover.png"
+        current_price:
+          type: number
+          description: 现价
+        current_unit:
+          type: string
+          description: 现价单位
+        original_price:
+          type: number
+          description: 原价
+        original_unit:
+          type: string
+          description: 原价单位
+        bought:
+          type: number
+          description: 已购买数量
+        left:
+          type: number
+          description: 剩余数量
+        specification:
+          type: string
+          description: 规格
+        description:
+          type: string
+          description: 描述
+
+    CouponData:
+      type: object
+      required: ["count", "items"]
+      properties:
+        count:
+          type: number
+          description: 已领取人数
+        items:
+          type: array
+          minItems: 2
+          items:
+            $ref: "#/components/schemas/CouponItem"
+
+    CouponItem:
+      type: object
+      required: ["id", "title", "merchant", "tags"]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        title:
+          type: string
+          description: 优惠券标题
+        merchant:
+          $ref: "#/components/schemas/MerchantData"
+        max_deduction:
+          type: number
+          description: 可选，最高减免
+        tags:
+          type: array
+          description: 标签
+          items:
+            type: string
+          example: ["满 1000 减 100", "满 10000 减 1000", "满 110000 减 1500"]
+
+    SeckillOrderSummary:
+      type: object
+      required: ["id", "product_info", "total", "current", "status"]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        product_info:
+          $ref: "#/components/schemas/SeckillProduct"
+        total:
+          type: number
+          description: 任务要求助力人数
+          example: 40
+        current:
+          type: number
+          description: 当前助力人数
+          example: 30
+        status:
+          type: string
+          description: 订单状态
+          enum:
+            - processing
+            - paying
+            - done
+            - written_off
+
+    SeckillOrder:
+      type: object
+      required: ["id", "total", "current", "avatar_urls", "helped", "status"]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        total:
+          type: number
+          description: 任务要求助力人数
+          example: 60
+        current:
+          type: number
+          description: 当前助力人数
+          example: 30
+        avatar_urls:
+          type: array
+          description: 头像
+          minItems: 30
+          items:
+            type: string
+        helped:
+          type: boolean
+          description: 当前用户是否已为此订单助力
+        status:
+          type: string
+          description: 订单状态
+          enum:
+            - processing
+            - paying
+            - done
+            - written_off
+
+    CollectOrder:
+      type: object
+      required: ["id", "total", "current", "avatar_urls", "helped", "status"]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        total:
+          type: number
+          description: 任务要求助力人数
+          example: 40
+        current:
+          type: number
+          description: 当前助力人数
+          example: 30
+        avatar_urls:
+          type: array
+          description: 头像
+          minItems: 30
+          items:
+            type: string
+        helped:
+          type: boolean
+          description: 当前用户是否已为此订单助力
+        status:
+          type: string
+          description: 订单状态
+          enum:
+            - processing
+            - done
+            - written_off
+
+    Banner:
+      type: object
+      required: ["src"]
+      properties:
+        src:
+          description: 图片地址
+          type: string
+          example: "http://oolqt5gs6.bkt.clouddn.com/bottom-banner.png"
+        link:
+          description: 图片链接
+          type: string
+          example: "http://baidu.com"
+
+    UserAction:
+      type: object
+      required: ["avatar_url", "name", "action"]
+      properties:
+        avatar_url:
+          description: 头像地址
+          type: string
+        name:
+          description: 用户名称
+          type: string
+        action:
+          description: 动作
+          type: string
+          enum:
+            - join_activity
+            - purchase_seckill_product
+            - reserve_live
+            - buy_coupon
+
+    MerchantData:
+      type: object
+      required: ["name", "logo_url"]
+      properties:
+        name:
+          description: 品牌名称
+          type: string
+          example: 大自然地板
+        logo_url:
+          description: logo地址
+          type: string
+          example: "http://oolqt5gs6.bkt.clouddn.com/coupon_cover.png"
+
+    WechatPayload:
+      type: object
+      description: 微信支付参数，参见：https://developers.weixin.qq.com/doc/offiaccount/OA_Web_Apps/JS-SDK.html
+      required: ["timestamp", "nonce_str", "package", "sign_type", "pay_sign"]
+      properties:
+        timestamp:
+          type: integer
+        nonce_str:
+          type: string
+        package:
+          type: string
+        sign_type:
+          type: string
+        pay_sign:
+          type: string
+
+    SignupInfo:
+      type: object
+      description: 注册信息
+      required: ["name", "phone", "code", "scene"]
+      properties:
+        name:
+          description: 名称
+          type: string
+        phone:
+          description: 手机号
+          type: string
+        code:
+          description: 验证码
+          type: string
+        from_uid:
+          description: 来源用户id
+          $ref: "#/components/schemas/Id"
+        scene:
+          description: 注册场景
+          enum:
+            - signup
+            - collect
+            - seckill
+            - live
+            - coupon
+
+    Location:
+      type: object
+      description: 地理位置信息
+      required: ["is_valid_location"]
+      properties:
+        from_uid:
+          description: 来源用户uid
+          $ref: "#/components/schemas/Id"
+        scene:
+          description: 来源场景
+          type: string
+          enum:
+            - collect
+            - seckill
+            - live
+            - collect_medal
+        longitude:
+          description: 经度
+          type: number
+        latitude:
+          description: 纬度
+          type: number
+        location:
+          description: 用户地址
+          type: string
+        is_valid_location:
+          description: 用户地址是否有效
+          type: boolean
+
+    SmsData:
+      type: object
+      description: 发送手机验证码
+      required: ["phone"]
+      properties:
+        phone:
+          description: 手机号
+          type: string
+
+    Merchant:
+      type: object
+      required: ["name", "logo_url", "stores"]
+      properties:
+        name:
+          description: 品牌名称
+          type: string
+          example: 大自然地板
+        logo_url:
+          description: logo地址
+          type: string
+          example: "http://oolqt5gs6.bkt.clouddn.com/coupon_cover.png"
+        stores:
+          type: array
+          minItems: 3
+          items:
+            type: object
+            required: ["name", "phone", "address"]
+            properties:
+              name:
+                description: 门店名称
+                type: string
+                example: 世纪金源店
+              phone:
+                description: 联系电话
+                type: string
+                example: "13127780269"
+              address:
+                description: 地址
+                type: string
+                example: 亿丰国际商贸城A3栋3楼
+
+    MyView:
+      type: object
+      required: ["name", "avatar_url", "result", "created_at"]
+      properties:
+        name:
+          description: 名称
+          type: string
+          example: 大雄
+        avatar_url:
+          description: 头像
+          type: string
+        result:
+          description: 结果
+          type: string
+          enum:
+            - successful
+            - failed
+        reason:
+          description: 无效原因
+          type: string
+        created_at:
+          description: 时间
+          type: number
+
+    MyCoupon:
+      type: object
+      required: ["name", "avatar_url", "created_at"]
+      properties:
+        name:
+          description: 名称
+          type: string
+          example: 大雄
+        avatar_url:
+          description: 头像
+          type: string
+        created_at:
+          description: 时间
+          type: number
+
+    MyRewardRecord:
+      type: object
+      required: ["title", "created_at", "amount"]
+      properties:
+        title:
+          description: 标题
+          type: string
+          example: 首次浏览
+        created_at:
+          description: 时间
+          type: number
+        amount:
+          description: 金额
+          type: number
+
+    MyOrder:
+      type: object
+      required:
+        ["id", "cover_url", "title", "merchant", "name", "phone", "created_at", "amount", "original_price"]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        title:
+          type: string
+          description: 标题
+          example: 49801 元汽车空气净化器
+        merchant:
+          $ref: "#/components/schemas/MerchantData"
+        cover_url:
+          type: string
+          description: 封面图
+          example: "http://oolqt5gs6.bkt.clouddn.com/seckill_cover.png"
+        name:
+          description: 下单人名称
+          type: string
+          example: 大雄
+        phone:
+          description: 下单人电话
+          type: string
+          example: 13127780269
+        created_at:
+          description: 创建时间
+          type: number
+        amount:
+          description: 金额
+          type: number
+        original_price:
+          type: number
+          description: 原价
+
+    WechatConfig:
+      type: object
+      required: ["app_id", "timestamp", "nonce_str", "signature"]
+      properties:
+        app_id:
+          description: 公众号的唯一标识
+          type: string
+        timestamp:
+          description: 生成签名的时间戳
+          type: string
+        nonce_str:
+          description: 生成签名的随机串
+          type: string
+        signature:
+          description: 签名
+          type: string
+
+    WriteOffData:
+      type: object
+      required: ["staff_wechat_id"]
+      properties:
+        staff_wechat_id:
+          $ref: "#/components/schemas/Id"
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+    PayParams:
+      type: object
+      required: ["timestamp", "nonce_str", "package", "sign_type", "pay_sign"]
+      properties:
+        timestamp:
+          type: string
+          description: 时间戳
+        nonce_str:
+          type: string
+          description: 随机字符串
+        package:
+          type: string
+          description: prepayid
+        sign_type:
+          type: string
+          description: 签名类型，比如MD5
+        pay_sign:
+          type: string
+          description: 签名
+
+    live_Room_GetRoomInfo:
+      type: object
+      required: [
+        "title",
+        "popularity",
+        "cover",
+        "description",
+        "hoster_avatar",
+        "hoster_name",
+        "notice",
+        "news_ticker",
+        "status",
+        "play_url",
+        "play_url_hls",
+        "play_url_rtmp",
+        "im_id",
+        "earnest",
+        "gifts",
+        "products",
+        "can_order",
+        "can_withdraw"
+      ]
+      properties:
+        room_id:
+          type: integer
+          description: 房间id
+        title:
+          type: string
+          description: 房间标题
+        activity_id:
+          type: integer
+          description: 活动id
+        popularity:
+          type: integer
+          description: 人气值
+        cover:
+          type: string
+          description: 房间封面
+        description:
+          type: string
+          description: 房间说明
+        hoster_name:
+          type: string
+          description: "主持人名字"
+        hoster_avatar:
+          type: string
+          description: "主持人头像"
+        notice:
+          type: string
+          description: 房间公告
+        news_ticker:
+          type: string
+          description: 滚动公告
+        status:
+          type: integer
+          description: 房间状态 -1 禁播 0未开播 1已经开播 2已经结束
+        play_url:
+          type: string
+          description: 播放地址
+        play_url_hls:
+          type: string
+          description: hls播放地址
+        play_url_rtmp:
+          type: string
+          description: rtmp播放地址
+        im_id:
+          type: string
+          description: 聊天室id
+        earnest:
+          type: number
+          description: 直播间产品订金
+        can_order:
+          type: boolean
+          description: 可以下单
+        can_withdraw:
+          type: boolean
+          description: 可以提现
+        gifts:
+          type: array
+          items:
+            type: object
+            required: ["id", "name", "num", "price"]
+            properties:
+              id:
+                type: integer
+                description: 礼物id
+              name:
+                type: string
+                description: 名字
+              num:
+                type: integer
+                description: 房间礼物数量
+              price:
+                type: integer
+                description: 价格, 单位是分
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/LiveProduct"
+        current_product:
+          $ref: "#/components/schemas/LiveProduct"
+        current_medal:
+          type: object
+          required: ["id", "activity_id", "merchant_id", "seller_name", "seller_title", "seller_avatar", "interact_times", "name", "img_url"]
+          properties:
+            id:
+              type: integer
+              description: id
+            activity_id:
+              type: integer
+              description: 活动id
+            merchant_id:
+              type: integer
+              description: 商户id
+            seller_name:
+              type: string
+              description: 销售名字
+            seller_title:
+              type: string
+              description: 销售头衔
+            seller_avatar:
+              type: string
+              description: 销售头像
+            interact_times:
+              type: integer
+              description: 互动次数
+            name:
+              type: string
+              description: 名字
+            img_url:
+              type: string
+              description: 勋章图片
+    LiveProduct:
+      type: object
+      required: [
+        "id",
+        "name",
+        "description",
+        "market_price",
+        "display_price",
+        "img_url",
+        "sold_num",
+        "merchant",
+        "stores"
+      ]
+      properties:
+        id:
+          type: integer
+          description: id
+        name:
+          type: string
+          description: 产品名字
+        description:
+          type: string
+          description: 产品描述/政策
+        market_price:
+          type: integer
+          description: 市场价
+        display_price:
+          type: integer
+          description: 直播价格，-1表示不限制
+        img_url:
+          type: string
+          description: 产品图片
+        sold_num:
+          type: integer
+          description: 销量
+        merchant:
+          description: 品牌信息
+          $ref: "#/components/schemas/MerchantData"
+        stores:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: ["name", "address", "phone"]
+            properties:
+              name:
+                type: string
+                description: 店名
+              address:
+                type: string
+                description: 地址
+              phone:
+                type: string
+                description: 电话
+    live_Gift_SendGift:
+      type: object
+      properties:
+        order_code:
+          type: string
+          description: 礼物订单号
+        pay_params:
+          $ref: "#/components/schemas/PayParams"
+    StreamInfo:
+      type: object
+      properties:
+        push_path:
+          type: string
+          description: 推流地址
+        push_key:
+          type: string
+          description: 推流码
+        play_url:
+          type: string
+          description: 播放地址
+    DirtyWords:
+      type: object
+      properties:
+        dirty_words:
+          type: array
+          items:
+            type: string
+            description: 脏词
+    UserMedal:
+      type: object
+      required: ["list", "verification_status", "task_status", "task_id", "task_required_count"]
+      properties:
+        verification_status:
+          type: integer
+          description: 核销状态，1已核销0未核销
+        task_status:
+          type: integer
+          description: 任务状态0未完成1已完成
+        task_id:
+          type: integer
+          description: 直播章任务id，核销的时候传过去
+        task_required_count:
+          type: integer
+          description: 任务要求徽章数量
+        list:
+          type: array
+          minItems: 10
+          items:
+            type: object
+            required: ["img", "name", "get"]
+            properties:
+              img:
+                type: string
+                description: 勋章图标
+                example: "http://oolqt5gs6.bkt.clouddn.com/coupon_cover.png"
+              name:
+                type: string
+                description: 勋章名字
+                example: 万象地板
+              merchant_id:
+                type: integer
+                description: 商户id
+              get:
+                type: boolean
+                description: 是否得到
+                example: true
+    UserOrder:
+      type: object
+      required: ["list"]
+      properties:
+        list:
+          type: array
+          description: 数据
+          items:
+            type: object
+            required:
+              [
+                "code",
+                "order_price",
+                "status",
+                "created_at",
+                "merchant_name",
+                "product_name",
+                "product_img",
+                "live_product_id",
+                "name",
+                "phone",
+              ]
+            properties:
+              code:
+                type: string
+                description: 订单号
+              order_price:
+                type: integer
+                description: 价格
+              status:
+                type: integer
+                description: 状态
+              created_at:
+                type: integer
+                description: 创建时间戳
+              merchant_name:
+                type: string
+                description: 商家名字
+              product_name:
+                type: string
+                description: 产品名称
+              product_img:
+                type: string
+                description: 产品图片
+              live_product_id:
+                $ref: "#/components/schemas/Id"
+                description: 产品id
+              name:
+                type: string
+                description: 用户名字
+              phone:
+                type: string
+                description: 用户电话
+
+    LiveUserInfo:
+      type: object
+      required: ["room_id", "im_token", "im_name", "im_id", "chatroom_im_id", "redpacket_amount"]
+      properties:
+        room_id:
+          type: integer
+          description: 房间id
+        im_token:
+          type: string
+          description: im token
+        im_name:
+          type: string
+          description: im name
+        im_id:
+          type: string
+          description: im id
+        chatroom_im_id:
+          type: string
+          description: 聊天室im id
+        redpacket_amount:
+          type: integer
+          description: 红包金额（单位：分）
+
+    LiveMessages:
+      type: object
+      required: ["list"]
+      properties:
+        list:
+          type: array
+          items:
+            type: object
+            required: ["name", "content", "seq", "time"]
+            properties:
+              name:
+                type: string
+                description: 消息发送者名称
+              content:
+                type: string
+                description: 消息内容
+              seq:
+                type: integer
+                description: 消息序列号
+              time:
+                type: integer
+                description: 消息发送时间
+
+  responses:
+    Default:
+      description: 错误响应
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"

@@ -1,0 +1,2602 @@
+openapi: 3.0.0
+
+info:
+  version: "0.0.1"
+  title: 员工端api
+  description: >-
+    员工端api协议, 分页协议参考https://docs.gitlab.com/ee/api/#pagination-link-header。
+    如无特殊说明，金钱的单位为分，1元=100；时间为unix时间戳；id为整数型。
+
+paths:
+  /common/v1/login/wechat:
+    get:
+      summary: 微信登录
+      parameters:
+        - name: redirect
+          in: query
+          description: 回跳地址，把cookie种入这个地址
+          required: true
+          schema:
+            type: string
+      responses:
+        "301":
+          description: 跳转微信授权地址
+          headers:
+            Location:
+              description: 微信授权地址
+              schema:
+                type: string
+
+  /staff/v1/user_info:
+    get:
+      summary: 获取用户信息
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserInfo"
+        "401":
+          description: 用户未登录
+
+  /staff/v1/activities:
+    get:
+      summary: 获取当前用户参加过的活动
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Activity"
+
+  /staff/v1/activities/{activity_id}:
+    get:
+      summary: 获取指定活动
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Activity"
+        "404":
+          description: 活动不存在
+
+  /staff/v1/activities/{activity_id}/join:
+    post:
+      summary: 加入指定活动
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/JoinActivity"
+      responses:
+        "200":
+          description: 成功
+
+  /staff/v1/activities/{activity_id}/staffs:
+    get:
+      summary: 获取指定活动员工列表
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: role
+          in: query
+          description: 角色
+          required: true
+          schema:
+            type: string
+            enum:
+              - merchant_admin
+              - merchant_staff
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                minItems: 10
+                items:
+                  $ref: "#/components/schemas/ActivityStaff"
+
+  /staff/v1/activities/{activity_id}/staffs/approval:
+    post:
+      summary: 审核活动员工申请
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              type: object
+              required: ["uids"]
+              properties:
+                uids:
+                  type: array
+                  items:
+                    type: number
+      responses:
+        "200":
+          description: 成功
+
+  /staff/v1/activities/{activity_id}/setting/recharge:
+    get:
+      summary: 获取指定活动充值设置
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityRechargeInfo"
+    post:
+      summary: >-
+        设置指定活动充值信息（只有活动负责人可设置，只可设置一次，设置后不可修改）
+        如果设置的值为0，无需充值，则直接把 /staff/v1/activities 接口中的 currentUser.inited 设为 true，可让其跳过充值
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/ActivityRechargeSetting"
+      responses:
+        "200":
+          description: 成功
+
+  /staff/v1/activities/{activity_id}/setting/reward_bean:
+    get:
+      summary: 获取指定活动奖励豆设置
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityRewardBeanSetting"
+    post:
+      summary: >-
+        设置指定活动奖励豆信息
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/ActivityRewardBeanSetting"
+      responses:
+        "200":
+          description: 成功
+
+  /staff/v1/activities/{activity_id}/setting/stage:
+    post:
+      summary: 指定活动增加一个阶段
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/ActivityStageSetting"
+      responses:
+        "200":
+          description: 成功
+
+  /staff/v1/activities/{activity_id}/setting/stages/{stage_id}/tasks:
+    get:
+      summary: 获取活动的某个阶段的任务
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: stage_id
+          in: path
+          description: 阶段Id
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityStageTaskSetting"
+    post:
+      summary: 设置活动的某个阶段的任务
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: stage_id
+          in: path
+          description: 阶段Id
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/ActivityStageTaskSetting"
+      responses:
+        "200":
+          description: 成功
+
+  ? /staff/v1/activities/{activity_id}/setting/stages/{stage_id}/punishtask_synchro
+  : post:
+      summary: 同步奖励豆任务都惩罚金任务
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: stage_id
+          in: path
+          description: 阶段Id
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 成功
+
+  /staff/v1/activities/{activity_id}/setting/stages/{stage_id}/punishment:
+    get:
+      summary: 获取活动的全局惩罚设置
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: stage_id
+          in: path
+          description: 阶段Id
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityPunishmentData"
+    post:
+      summary: 设置活动的全局惩罚设置
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: stage_id
+          in: path
+          description: 阶段Id
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/ActivityPunishmentData"
+      responses:
+        "200":
+          description: 成功
+
+  ? /staff/v1/activities/{activity_id}/setting/stages/{stage_id}/punishment/{merchant_id}
+  : get:
+      summary: 获取活动的商户惩罚设置
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: stage_id
+          in: path
+          description: 阶段Id
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: merchant_id
+          in: path
+          description: 阶段Id
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityPunishmentData"
+    post:
+      summary: 设置活动的商户惩罚设置
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: stage_id
+          in: path
+          description: 阶段Id
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: merchant_id
+          in: path
+          description: 阶段Id
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/ActivityPunishmentData"
+      responses:
+        "200":
+          description: 成功
+
+  /staff/v1/activities/{activity_id}/manual_adjustment:
+    post:
+      summary: 手动惩罚某品牌
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/ActivityManualAdjustment"
+      responses:
+        "200":
+          description: 成功
+
+  /staff/v1/activities/{activity_id}/user_search:
+    get:
+      summary: 业主查询
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: phone
+          in: query
+          description: 电话号码
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityUserInfo"
+
+  /staff/v1/activities/{activity_id}/bonus/stages/{stage_id}:
+    get:
+      summary: 获取某个阶段的奖金信息
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: stage_id
+          in: path
+          description: 阶段ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityStageBonusDetail"
+
+  /staff/v1/activities/{activity_id}/bonus/stages/{stage_id}/ranking:
+    get:
+      summary: 获取阶段奖金池排行榜数据
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: stage_id
+          in: path
+          description: 阶段ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: ranking_role
+          in: query
+          description: 排行榜角色
+          required: true
+          schema:
+            $ref: "#/components/schemas/RankingRole"
+        - name: is_finished
+          in: query
+          description: 列出已完成 or 未完成的数据
+          schema:
+            type: boolean
+        - name: search
+          in: query
+          description: 搜索参数（目前只需哟支持品牌和员工名称）
+          schema:
+            type: string
+        - name: offset
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+        - name: limit
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: array
+                minItems: 10
+                items:
+                  $ref: "#/components/schemas/ActivityStageBonusRankingData"
+
+  /staff/v1/activities/{activity_id}/bonus/stages/{stage_id}/ranking/mine:
+    get:
+      summary: 获取当前阶段奖金池中，当前个人（或品牌）的数据，根据ranking_role的不同，返回个人或者品牌的数据
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: stage_id
+          in: path
+          description: 阶段ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: ranking_role
+          in: query
+          description: 排行榜角色
+          required: true
+          schema:
+            $ref: "#/components/schemas/RankingRole"
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityStageBonusMyRankingData"
+
+  /staff/v1/activities/{activity_id}/merchants:
+    get:
+      summary: 获取某个活动的品牌信息
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityMerchant"
+
+  /staff/v1/activities/{activity_id}/recharge/merchant/wechat:
+    get:
+      summary: 获取此活动当前用户的微信充值参数(当前用户为品牌)
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WechatPayload"
+
+  /staff/v1/activities/{activity_id}/recharge/staff/wechat:
+    get:
+      summary: 获取此活动当前用户的微信充值参数(当前用户为员工)
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WechatPayload"
+
+  /staff/v1/activities/{activity_id}/manual_recharge/wechat:
+    post:
+      summary: 获取手动充值的微信充值参数
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      requestBody:
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/ActivityManualRecharge"
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WechatPayload"
+
+  /staff/v1/activities/{activity_id}/stages/{stage_id}/summary:
+    get:
+      summary: 获取当前用户在某个活动中某个阶段数据的汇总
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: stage_id
+          in: path
+          description: 阶段ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityStageSummary"
+
+  /staff/v1/activities/{activity_id}/performance:
+    get:
+      summary: 获取当前用户的业绩数据
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PerformanceData"
+
+  /staff/v1/activities/{activity_id}/performance/views:
+    get:
+      summary: 获取当前用户的浏览业绩
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: offset
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+        - name: limit
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PerformanceViewsData"
+
+  /staff/v1/activities/{activity_id}/performance/fissions:
+    get:
+      summary: 获取当前用户的裂变业绩
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: offset
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+        - name: limit
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PerformanceFissionsData"
+
+  ? /staff/v1/activities/{activity_id}/performance/fissions/users/{user_id}/childrens
+  : get:
+      summary: 获取裂变业绩中某个业主的裂变信息
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: user_id
+          in: path
+          description: 业主ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PerformanceFissionsUserChildrenData"
+
+  /staff/v1/activities/{activity_id}/performance/signups:
+    get:
+      summary: 获取当前用户的报名业绩
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: offset
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+        - name: limit
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PerformanceSignupsData"
+
+  /staff/v1/activities/{activity_id}/performance/coupons:
+    get:
+      summary: 获取当前用户的售卡业绩
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: offset
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+        - name: limit
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PerformanceSignupsData"
+
+  /staff/v1/activities/{activity_id}/performance/signs:
+    get:
+      summary: 获取当前用户的签单业绩
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: offset
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+        - name: limit
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PerformanceSignupsData"
+
+  /staff/v1/activities/{activity_id}/performance/live_orders:
+    get:
+      summary: 获取当前用户的直播签单业绩
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: offset
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+        - name: limit
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PerformanceSignupsData"
+
+  /staff/v1/activities/{activity_id}/performance/collects:
+    get:
+      summary: 获取当前用户的集赞业绩
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: offset
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+        - name: limit
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PerformanceCollectsData"
+
+  /staff/v1/activities/{activity_id}/performance/live_invitations:
+    get:
+      summary: 获取当前用户直播邀请业绩
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: offset
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+        - name: limit
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PerformanceLiveInvitationsData"
+
+  /staff/v1/activities/{activity_id}/ranking:
+    get:
+      summary: 获取活动排行榜数据
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: ranking_role
+          in: query
+          description: 排行榜角色
+          required: true
+          schema:
+            $ref: "#/components/schemas/RankingRole"
+        - name: ranking_type
+          in: query
+          description: 排行榜类型
+          required: true
+          schema:
+            $ref: "#/components/schemas/RankingType"
+        - name: period
+          in: query
+          description: 周期
+          required: true
+          schema:
+            type: string
+        - name: offset
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+        - name: limit
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: array
+                minItems: 10
+                items:
+                  $ref: "#/components/schemas/RankingData"
+
+  /staff/v1/activities/{activity_id}/ranking/mine:
+    get:
+      summary: 获取活动排行榜当前个人（或品牌）的数据，根据ranking_role的不同，返回个人或者品牌的数据
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: ranking_role
+          in: query
+          description: 排行榜角色
+          required: true
+          schema:
+            $ref: "#/components/schemas/RankingRole"
+        - name: ranking_type
+          in: query
+          description: 排行榜类型
+          required: true
+          schema:
+            $ref: "#/components/schemas/RankingType"
+        - name: period
+          in: query
+          description: 周期
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyRankingData"
+
+  /staff/v1/activities/{activity_id}/data-analysis:
+    get:
+      summary: 获取活动分析数据
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityDataAnalysisModel"
+
+  /staff/v1/activities/{activity_id}/finance/staff:
+    get:
+      summary: 获取当前用户的财务信息
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityStaffFinanceData"
+
+  /staff/v1/activities/{activity_id}/finance/staff/transations:
+    get:
+      summary: 个人财务流水记录
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: offset
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+        - name: limit
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityStaffFinanceTransaction"
+
+  /staff/v1/activities/{activity_id}/finance/staff/withdraw:
+    post:
+      summary: 当前用户提现到微信钱包
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 提现成功
+
+  /staff/v1/activities/{activity_id}/finance/merchant:
+    get:
+      summary: 获取当前商户的财务信息（当前用户是品牌负责人，获取负责的对应品牌财务信息）
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityMerchantFinanceData"
+
+  /staff/v1/activities/{activity_id}/finance/merchant/punishment_records:
+    get:
+      summary: 惩罚记录
+      parameters:
+        - name: activity_id
+          in: path
+          description: 活动ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/Id"
+        - name: offset
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+        - name: limit
+          in: query
+          description: 分页参数
+          schema:
+            type: number
+
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityMerchantFinancePunishmentRecord"
+
+components:
+  schemas:
+    Id:
+      type: integer
+      description: id
+
+    UserInfo:
+      type: object
+      required: ["id", "name", "avatar_url"]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        name:
+          type: string
+          description: 用户名称
+        avatar_url:
+          type: string
+          description: 用户头像
+
+    Activity:
+      type: object
+      required:
+        [
+          "id",
+          "title",
+          "cover_url",
+          "location",
+          "start_time",
+          "end_time",
+          "live_time",
+          "activity_post_url",
+          "live_post_url",
+          "staff_invitation_post_url",
+          "wechat_sharing_cover_url",
+          "fund_info",
+          "reward_info",
+          "stages",
+        ]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        title:
+          type: string
+          description: 活动标题
+        cover_url:
+          type: string
+          description: 活动封面
+        location:
+          type: string
+          description: 活动地点
+        start_time:
+          type: integer
+          description: 活动开始时间(unix时间戳)
+        end_time:
+          type: integer
+          description: 活动结束时间(unix时间戳)
+        live_time:
+          type: integer
+          description: 直播时间(unix时间戳)
+        activity_post_url:
+          type: string
+          description: 此活动的活动海报背景图
+        live_post_url:
+          type: string
+          description: 此活动的直播海报背景图
+        staff_invitation_post_url:
+          type: string
+          description: 此活动的员工邀请海报背景图
+        wechat_sharing_cover_url:
+          type: string
+          description: 微信分享封面
+          example: "http://oolqt5gs6.bkt.clouddn.com/1571741939285.jpg"
+        wechat_sharing_title:
+          type: string
+          description: 微信分享标题
+        wechat_sharing_description:
+          type: string
+          description: 微信分享描述
+        fund_info:
+          $ref: "#/components/schemas/ActivityFundInfo"
+        reward_info:
+          $ref: "#/components/schemas/ActivityRewardInfo"
+        current_user:
+          description: 如果用户参加了此活动，则带上current_user的信息
+          type: object
+          required:
+            ["merchant_id", "store_id", "name", "role", "status", "disabled"]
+          properties:
+            merchant_id:
+              $ref: "#/components/schemas/Id"
+              description: 当前用户在此活动中的商户Id
+            store_id:
+              $ref: "#/components/schemas/Id"
+              description: 当前用户在此活动中的门店Id
+            name:
+              type: string
+              description: 当前用户在此活动中的名称
+            role:
+              type: string
+              description: 当前用户在此活动中的角色
+              enum:
+                - activity_admin
+                - merchant_admin
+                - merchant_staff
+              example: merchant_admin
+            disabled:
+              type: boolean
+              description: 是否被禁用
+              example: false
+            status:
+              description: 用户状态
+              type: object
+              required: ["passed", "inited"]
+              properties:
+                passed:
+                  type: boolean
+                  description: 是否已审核通过
+                inited:
+                  type: boolean
+                  description: 是否已完成初始操作（活动负责人需要进行活动设置，品牌负责人和员工需要充值，完成之后可进入首页）
+        stages:
+          type: array
+          description: 活动阶段数组
+          items:
+            type: object
+            required: ["id", "name", "start_time", "end_time", "bonus"]
+            properties:
+              id:
+                $ref: "#/components/schemas/Id"
+                description: 阶段ID
+              name:
+                type: string
+                description: 阶段名称
+              start_time:
+                type: integer
+                description: 开始时间
+              end_time:
+                type: integer
+                description: 结束时间
+              bonus:
+                $ref: "#/components/schemas/ActivityStageBonus"
+
+    ActivityFundInfo:
+      type: object
+      description: 活动奖金信息
+      required:
+        [
+          "merchant",
+          "staff",
+          "merchant_balance",
+          "staff_balance",
+          "budget",
+          "live_red_package",
+        ]
+      properties:
+        merchant:
+          type: integer
+          description: 品牌奖金总额
+        staff:
+          type: integer
+          description: 员工奖金总额
+        merchant_balance:
+          type: integer
+          description: 品牌奖金余额
+        staff_balance:
+          type: integer
+          description: 员工奖金余额
+        budget:
+          type: integer
+          description: 推广费预算：用于发放设置的浏览、裂变奖励（单位：分）
+        live_red_package:
+          type: integer
+          description: 直播间红包
+
+    ActivityRewardInfo:
+      type: object
+      description: 活动现金奖励信息
+      required: ["views", "fissions", "coupons"]
+      properties:
+        views:
+          $ref: "#/components/schemas/ActivityRewardInfoItem"
+          description: 浏览
+        fissions:
+          $ref: "#/components/schemas/ActivityRewardInfoItem"
+          description: 裂变
+        coupons:
+          $ref: "#/components/schemas/ActivityRewardInfoItem"
+          description: 售卡
+
+    ActivityRewardInfoItem:
+      type: object
+      description: 活动现金奖励信息
+      required: ["money", "points"]
+      properties:
+        money:
+          type: integer
+          description: 金额（单位：分）
+        points:
+          type: integer
+          description: 积分
+
+    ActivityStageBonus:
+      type: object
+      description: 活动奖金信息
+      required: ["merchant", "staff"]
+      properties:
+        merchant:
+          type: integer
+          description: 品牌奖金总额
+        staff:
+          type: integer
+          description: 员工奖金总额
+
+    ActivityMerchant:
+      type: object
+      required:
+        ["id", "logo_url", "name", "not_finish_deduct", "points", "groups"]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+          description: 品牌ID
+        logo_url:
+          type: "string"
+          description: 品牌logo
+        name:
+          type: string
+          description: 品牌名称
+        not_finish_deduct:
+          type: number
+          description: 纪律任务考核金余额
+        points:
+          type: number
+          description: 积分余额
+        groups:
+          type: array
+          items:
+            type: object
+            required: ["id", "name"]
+            properties:
+              id:
+                $ref: "#/components/schemas/Id"
+                description: 团队ID
+              name:
+                type: string
+                description: 团队名称
+
+    ActivityMerchantBrief:
+      type: object
+      required: ["id", "name"]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+          description: 品牌ID
+        name:
+          type: string
+          description: 品牌名称
+
+    ActivityStoreBrief:
+      type: object
+      required: ["id", "name"]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+          description: 门店ID
+        name:
+          type: string
+          description: 门店名称
+
+    ActivityStaff:
+      type: object
+      required:
+        ["id", "avatar_url", "name", "phone", "merchant", "store", "status"]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        avatar_url:
+          description: 头像Url链接
+          type: string
+        name:
+          description: 昵称
+          type: string
+        phone:
+          description: 电话
+          type: string
+        merchant:
+          $ref: "#/components/schemas/ActivityMerchantBrief"
+        store:
+          $ref: "#/components/schemas/ActivityStoreBrief"
+        status:
+          type: string
+          enum:
+            - passed
+            - waiting
+
+    ActivityStageSummary:
+      type: object
+      required: ["self", "merchant"]
+      properties:
+        self:
+          description: 个人阶段数据汇总
+          $ref: "#/components/schemas/ActivityStageSummaryData"
+        merchant:
+          description: 品牌阶段数据汇总
+          $ref: "#/components/schemas/ActivityStageSummaryData"
+
+    ActivityStageSummaryData:
+      type: object
+      required: ["reward_bean_rank", "reward_bean_count", "estimated_income"]
+      properties:
+        reward_bean_rank:
+          type: integer
+          description: 奖励豆排行位置
+        reward_bean_count:
+          type: integer
+          description: 奖励豆数
+        estimated_income:
+          type: integer
+          description: 预计收入
+        views:
+          description: 浏览
+          $ref: "#/components/schemas/ActivityStageSummaryDataItem"
+        fissions:
+          description: 裂变
+          $ref: "#/components/schemas/ActivityStageSummaryDataItem"
+        collects:
+          description: 集赞
+          $ref: "#/components/schemas/ActivityStageSummaryDataItem"
+        coupons:
+          description: 售卡
+          $ref: "#/components/schemas/ActivityStageSummaryDataItem"
+        self_signs:
+          description: 签单
+          $ref: "#/components/schemas/ActivityStageSummaryDataItem"
+        contribute_signs:
+          description: 贡献签单
+          $ref: "#/components/schemas/ActivityStageSummaryDataItem"
+        live_nums:
+          description: 直播间人数
+          $ref: "#/components/schemas/ActivityStageSummaryDataItem"
+        live_orders:
+          description: 直播间订单数
+          $ref: "#/components/schemas/ActivityStageSummaryDataItem"
+        signups:
+          description: 报名
+          $ref: "#/components/schemas/ActivityStageSummaryDataItem"
+
+    ActivityStageSummaryDataItem:
+      type: object
+      required: ["count", "percentage", "is_finished"]
+      properties:
+        count:
+          type: integer
+          description: 数据量
+        percentage:
+          type: integer
+          description: 百分比，99.99% = 99.99
+        is_finished:
+          type: boolean
+
+    JoinActivity:
+      type: object
+      required: ["inviter_id", "name", "phone"]
+      properties:
+        inviter_id:
+          description: 邀请者Uid
+          $ref: "#/components/schemas/Id"
+        merchant_id:
+          description: 当前用户在此活动中的品牌Id（品牌），对应注册页面的商户
+          $ref: "#/components/schemas/Id"
+        store_id:
+          description: 当前用户在此活动中的组Id，对应注册页面的门店
+          $ref: "#/components/schemas/Id"
+        name:
+          type: string
+          description: 当前用户在此活动中的名称
+        phone:
+          type: string
+          description: 当前用户在此活动中的手机号
+        role:
+          type: string
+          description: 当前用户在此活动中的角色
+          enum:
+            - activity_admin
+            - merchant_admin
+            - merchant_staff
+
+    ActivityRechargeInfo:
+      type: object
+      required: ["total", "detail"]
+      properties:
+        total:
+          description: 当前用户（品牌负责人或者员工，不需要充值则为0）需要充值的总金额（单位：分）
+          type: integer
+        detail:
+          $ref: "#/components/schemas/ActivityRechargeSetting"
+
+    ActivityRechargeSetting:
+      type: object
+      description: 活动奖金设置
+      required:
+        [
+          "user_recharge",
+          "merchant_recharge",
+          "merchant_reward",
+          "not_finish_deduct",
+          "budget",
+          "live_red_package",
+        ]
+      properties:
+        user_recharge:
+          description: 员工充值奖金池：设置员工注册审核通过后每个人需充值的金额（单位：分）
+          type: integer
+        merchant_recharge:
+          description: 品牌充值员工奖金池：每个品牌为员工奖金池赞助的奖金（单位：分）
+          type: integer
+        merchant_reward:
+          description: 品牌奖金池：用于品牌的任务设定，督促员工完成任务（单位：分）
+          type: integer
+        not_finish_deduct:
+          description: 纪律任务考核金：用于处罚未完成任务的品牌（单位：分）
+          type: integer
+        budget:
+          description: 推广费预算：用于发放设置的浏览、裂变奖励（单位：分）
+          type: integer
+        live_red_package:
+          description: 直播间红包：用于直播时直播间互动发红包（单位：分）
+          type: integer
+
+    WechatPayload:
+      type: object
+      description: 微信支付参数，参见：https://developers.weixin.qq.com/doc/offiaccount/OA_Web_Apps/JS-SDK.html
+      required: ["timestamp", "nonce_str", "package", "sign_type", "pay_sign"]
+      properties:
+        timestamp:
+          type: integer
+        nonce_str:
+          type: string
+        package:
+          type: string
+        sign_type:
+          type: string
+        pay_sign:
+          type: string
+
+    ActivityRewardBeanSetting:
+      type: object
+      description: 活动通用设置
+      required:
+        [
+          "views",
+          "fissions",
+          "collects",
+          "coupons",
+          "self_signs",
+          "contribute_signs",
+          "live_nums",
+        ]
+      properties:
+        views:
+          description: 浏览
+          type: integer
+        fissions:
+          description: 裂变
+          type: integer
+        collects:
+          description: 集赞
+          type: integer
+        coupons:
+          description: 售卡
+          type: integer
+        self_signs:
+          description: 签单
+          type: integer
+        contribute_signs:
+          description: 贡献签单
+          type: integer
+        live_nums:
+          description: 直播间/人
+          type: integer
+
+    ActivityStageSetting:
+      type: object
+      description: 活动阶段设置
+      required:
+        ["name", "start_time", "end_time", "merchant_recharge", "staff_reward"]
+      properties:
+        name:
+          type: string
+        start_time:
+          type: integer
+        end_time:
+          type: integer
+        merchant_recharge:
+          type: integer
+        staff_reward:
+          type: integer
+
+    ActivityStageTaskSetting:
+      type: object
+      description: 奖金池任务设置
+      required: ["merchant"]
+      properties:
+        staff:
+          description: 员工任务
+          $ref: "#/components/schemas/ActivityStageTaskData"
+        merchant:
+          type: array
+          description: 品牌任务
+          items:
+            type: object
+            required: ["merchant_id", "data"]
+            properties:
+              merchant_id:
+                description: "商户id"
+                type: number
+              data:
+                description: 任务数据
+                $ref: "#/components/schemas/ActivityStageTaskData"
+
+    ActivityStageTaskData:
+      type: object
+      description: 奖金池任务数据
+      required:
+        [
+          "views",
+          "fissions",
+          "collects",
+          "coupons",
+          "self_signs",
+          "contribute_signs",
+          "live_nums",
+          "live_orders",
+          "signups",
+          "forwards",
+        ]
+      properties:
+        views:
+          description: 浏览
+          type: integer
+        fissions:
+          description: 裂变
+          type: integer
+        collects:
+          description: 集赞
+          type: integer
+        coupons:
+          description: 售卡
+          type: integer
+        self_signs:
+          description: 签单
+          type: integer
+        contribute_signs:
+          description: 贡献签单
+          type: integer
+        live_nums:
+          description: 直播间人数
+          type: integer
+        live_orders:
+          description: 直播间订单数
+          type: integer
+        signups:
+          description: 报名
+          type: integer
+        forwards:
+          description: 转发
+          type: integer
+
+    ActivityPunishmentData:
+      type: object
+      description: 活动惩罚数据
+      properties:
+        viewpunishs:
+          description: 浏览数量
+          type: integer
+        signuppunishs:
+          description: 裂变数量
+          type: integer
+        selfsignpunishs:
+          description: 集赞数量
+          type: integer
+        contributesignpunishs:
+          description: 售卡数量
+          type: integer
+        fissionpunishs:
+          description: 签单数量
+          type: integer
+        forwardpunishs:
+          description: 贡献签单数量
+          type: integer
+        livenumpunishs:
+          description: 直播间人数数量
+          type: integer
+        liveorderpunishs:
+          description: 直播间订单数数量
+          type: integer
+        collectpunishs:
+          description: 报名数量
+          type: integer
+        couponpunishs:
+          description: 转发数量
+          type: integer
+
+        views_punish:
+          description: 浏览惩罚金
+          type: integer
+        fissions_punish:
+          description: 裂变惩罚金
+          type: integer
+        collects_punish:
+          description: 集赞惩罚金
+          type: integer
+        coupons_punish:
+          description: 售卡惩罚金
+          type: integer
+        self_signs_punish:
+          description: 签单惩罚金
+          type: integer
+        contribute_signs_punish:
+          description: 贡献签单惩罚金
+          type: integer
+        live_nums_punish:
+          description: 直播间人数惩罚金
+          type: integer
+        live_orders_punish:
+          description: 直播间订单数惩罚金
+          type: integer
+        signups_punish:
+          description: 报名惩罚金
+          type: integer
+        forwards_punish:
+          description: 转发惩罚金
+          type: integer
+
+    ActivityManualAdjustment:
+      type: object
+      description: 手动操作数据
+      required: ["kind", "merchant_id", "points", "reason"]
+      properties:
+        kind:
+          description: 操作类型
+          enum:
+            - punishment
+            - reward
+        merchant_id:
+          description: 品牌id
+          $ref: "#/components/schemas/Id"
+        points:
+          description: 奖惩积分数量
+          type: integer
+        money:
+          description: 奖惩金额数量（目前奖励无现金，可不处理）
+          type: integer
+        reason:
+          description: 奖惩原因
+          type: string
+
+    ActivityManualRecharge:
+      type: object
+      description: 活动手动充值
+      required: ["role", "type", "money"]
+      properties:
+        role:
+          enum:
+            - activity_admin
+            - merchant_admin
+          description: 角色
+        type:
+          description: 充值类型
+          enum:
+            - merchant
+            - staff
+            - budget
+            - live_red_package
+        money:
+          description: 充值金额
+          type: integer
+
+    ActivityUserInfo:
+      type: object
+      description: 业主信息
+      required:
+        [
+          "avatar_url",
+          "nickname",
+          "data",
+          "verification",
+          "orders",
+          "live_orders",
+        ]
+      properties:
+        avatar_url:
+          description: 头像Url链接
+          type: string
+        nickname:
+          description: 昵称
+          type: string
+        real_name:
+          description: 报名时的姓名
+          type: string
+        phone:
+          description: 报名时的电话
+          type: string
+        first_view:
+          description: 首次浏览信息
+          type: object
+          required: ["from_user_name", "created_at"]
+          properties:
+            from_user_name:
+              description: 首次浏览邀请人，员工写名字，业主就写微信昵称
+              type: string
+            created_at:
+              description: 首次浏览时间
+              type: number
+        signup_at:
+          description: 报名时间
+          type: number
+        data:
+          description: 数据信息
+          type: object
+          required: ["view", "fission", "signup", "coupon"]
+          properties:
+            view:
+              description: 浏览
+              $ref: "#/components/schemas/ActivityUserInfoDataItem"
+            fission:
+              description: 裂变
+              $ref: "#/components/schemas/ActivityUserInfoDataItem"
+            signup:
+              description: 报名
+              $ref: "#/components/schemas/ActivityUserInfoDataItem"
+            coupon:
+              description: 售卡
+              $ref: "#/components/schemas/ActivityUserInfoDataItem"
+        verification:
+          description: 核销信息
+          type: object
+          required: ["live", "collect"]
+          properties:
+            live:
+              description: 直播章
+              type: number
+            collect:
+              description: 集赞
+              type: number
+        orders:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityUserInfoOrder"
+        live_orders:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityUserInfoOrder"
+
+    ActivityUserInfoDataItem:
+      type: object
+      description: 业主信息的数据项
+      required: ["owner", "rewarder"]
+      properties:
+        owner:
+          nullable: true
+          description: 归属人
+          $ref: "#/components/schemas/ActivityUserInfoDataItemBrief"
+        rewarder:
+          nullable: true
+          description: 奖励人
+          $ref: "#/components/schemas/ActivityUserInfoDataItemBrief"
+
+    ActivityUserInfoDataItemBrief:
+      type: object
+      required: ["id", "nickname"]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        nickname:
+          description: 昵称
+          type: string
+
+    ActivityUserInfoOrder:
+      type: object
+      required:
+        ["id", "cover_url", "title", "name", "phone", "created_at", "amount"]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        cover_url:
+          description: 商品头图
+          type: string
+        title:
+          description: 商品名称
+          type: string
+        name:
+          description: 下单人名称
+          type: string
+        phone:
+          description: 下单人电话
+          type: string
+        created_at:
+          description: 创建时间
+          type: number
+        amount:
+          description: 金额
+          type: number
+
+    PerformanceData:
+      type: object
+      required:
+        [
+          "view",
+          "fission",
+          "signup",
+          "coupon",
+          "sign",
+          "live",
+          "collect",
+          "live_invitation",
+        ]
+      properties:
+        view:
+          description: 浏览客户
+          type: number
+        fission:
+          description: 海报裂变用户
+          type: number
+        signup:
+          description: 报名客户
+          type: number
+        coupon:
+          description: 售卡客户
+          type: number
+        sign:
+          description: 签单客户
+          type: number
+        live:
+          description: 直播签单客户
+          type: number
+        collect:
+          description: 集赞客户
+          type: number
+        live_invitation:
+          description: 直播邀请业绩
+          type: number
+
+    PerformanceViewsData:
+      type: object
+      required:
+        [
+          "id",
+          "avatar_url",
+          "name",
+          "data",
+          "result",
+          "change",
+          "reason",
+          "created_at",
+        ]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        avatar_url:
+          description: 头像
+          type: string
+        name:
+          description: 名称
+          type: string
+        data:
+          description: 数据
+          $ref: "#/components/schemas/ActivityUserInfoDataItem"
+        result:
+          description: 结果
+          type: string
+          enum:
+            - successful
+            - failed
+        change:
+          description: 积分豆变化数量
+          type: number
+        reason:
+          description: 原因
+          type: string
+        created_at:
+          description: 创建时间
+          type: number
+
+    PerformanceFissionsData:
+      type: object
+      required: ["count", "items"]
+      properties:
+        count:
+          type: object
+          required: ["all", "done"]
+          properties:
+            all:
+              type: number
+              description: 参与人数
+              example: 4
+            done:
+              type: number
+              description: 完成人数
+              example: 1
+        items:
+          type: array
+          items:
+            type: object
+            required:
+              [
+                "id",
+                "avatar_url",
+                "name",
+                "number",
+                "status",
+                "parent_name",
+                "created_at",
+              ]
+            properties:
+              id:
+                $ref: "#/components/schemas/Id"
+              avatar_url:
+                description: 头像
+                type: string
+              name:
+                description: 名称
+                type: string
+                example: 大雄
+              number:
+                description: 数量
+                type: number
+                example: 2
+              status:
+                description: 状态
+                type: string
+                enum:
+                  - processing
+                  - done
+                example: done
+              parent_name:
+                description: 上级名字
+                type: string
+              created_at:
+                description: 创建时间
+                type: number
+
+    PerformanceFissionsUserChildrenData:
+      type: object
+      required: ["list"]
+      properties:
+        list:
+          type: array
+          items:
+            type: object
+            required: ["avatar_url"]
+            properties:
+              avatar_url:
+                description: 头像url
+                type: string
+
+    PerformanceCollectsData:
+      type: object
+      required: ["id", "avatar_url", "name", "created_at"]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        avatar_url:
+          description: 头像
+          type: string
+        name:
+          description: 名称
+          type: string
+        created_at:
+          description: 创建时间
+          type: number
+
+    PerformanceLiveInvitationsData:
+      type: object
+      required: ["id", "avatar_url", "name", "created_at"]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        avatar_url:
+          description: 头像
+          type: string
+        name:
+          description: 名称
+          type: string
+        created_at:
+          description: 创建时间
+          type: number
+
+    PerformanceSignupsData:
+      type: object
+      required: ["id", "avatar_url", "name", "real_name", "phone", "created_at"]
+      properties:
+        id:
+          $ref: "#/components/schemas/Id"
+        avatar_url:
+          description: 头像
+          type: string
+        name:
+          description: 名称
+          type: string
+        real_name:
+          description: 报名时填写姓名
+          type: string
+        phone:
+          description: 报名时填写电话
+          type: string
+        created_at:
+          description: 创建时间
+          type: number
+
+    RankingType:
+      type: string
+      enum:
+        - views
+        - fissions
+        - forwards
+        - signups
+        - coupons
+        - self_signs
+        - contributed_signs
+        - points
+        - live_invitations
+        - live_reservations
+        - collects
+        - reward_beans
+        - signs_total
+        - money
+
+    RankingRole:
+      type: string
+      enum:
+        - staff
+        - merchant
+
+    RankingData:
+      type: object
+      required: ["avatar_url", "name", "merchant_name", "amount"]
+      properties:
+        avatar_url:
+          description: 头像
+          type: string
+        name:
+          description: 名称
+          type: string
+        merchant_name:
+          description: 品牌名称
+          type: string
+        amount:
+          description: 数量
+          type: number
+
+    MyRankingData:
+      type: object
+      required: ["ranking", "data"]
+      properties:
+        ranking:
+          description: 我的排行
+          type: number
+        data:
+          description: 数据
+          $ref: "#/components/schemas/RankingData"
+
+    ActivityDataAnalysisModel:
+      type: object
+      required:
+        [
+          "total",
+          "average",
+          "seckill_orders_source",
+          "orders_source",
+          "views_source",
+          "signups_source",
+          "signups_conversion",
+          "coupons_conversion",
+        ]
+      properties:
+        total:
+          description: 数据总览
+          $ref: "#/components/schemas/ActivityDataAnalysisData"
+        average:
+          description: 人均数据
+          $ref: "#/components/schemas/ActivityDataAnalysisData"
+        seckill_orders_source:
+          description: 秒杀订单来源分析
+          type: array
+          minItems: 5
+          items:
+            $ref: "#/components/schemas/ActivityDataAnalysisSourceData"
+        orders_source:
+          description: 订单来源分析
+          type: array
+          minItems: 5
+          items:
+            $ref: "#/components/schemas/ActivityDataAnalysisSourceData"
+        views_source:
+          description: 浏览业主来源分析
+          type: array
+          minItems: 5
+          items:
+            $ref: "#/components/schemas/ActivityDataAnalysisSourceData"
+        signups_source:
+          description: 报名业主来源分析
+          type: array
+          minItems: 5
+          items:
+            $ref: "#/components/schemas/ActivityDataAnalysisSourceData"
+        signups_conversion:
+          description: 报名转化率
+          type: array
+          minItems: 5
+          items:
+            $ref: "#/components/schemas/ActivityDataAnalysisConversionData"
+        coupons_conversion:
+          description: 购卡转化率
+          type: array
+          minItems: 5
+          items:
+            $ref: "#/components/schemas/ActivityDataAnalysisConversionData"
+
+    ActivityDataAnalysisData:
+      type: object
+      required:
+        [
+          "views",
+          "fissions",
+          "signups",
+          "coupons",
+          "seckill_orders",
+          "signs",
+          "collects",
+        ]
+      properties:
+        views:
+          description: 浏览人数
+          type: number
+        fissions:
+          description: 裂变人数
+          type: number
+        signups:
+          description: 报名人数
+          type: number
+        coupons:
+          description: 售卡人数
+          type: number
+        seckill_orders:
+          description: 秒杀单数
+          type: number
+        signs:
+          description: 签单单数
+          type: number
+        collects:
+          description: 点赞人数
+          type: number
+
+    ActivityDataAnalysisSourceData:
+      type: object
+      required: ["source_name", "amount"]
+      properties:
+        source_name:
+          description: 来源名称
+          type: string
+        amount:
+          description: 数量
+          type: number
+
+    ActivityDataAnalysisConversionData:
+      type: object
+      required: ["source_name", "amount", "percentage"]
+      properties:
+        source_name:
+          description: 来源名称
+          type: string
+        amount:
+          description: 数量
+          type: number
+        percentage:
+          description: 转化率
+          type: number
+
+    ActivityStaffFinanceData:
+      type: object
+      required: ["total", "withdrawable", "withdrawn", "others"]
+      properties:
+        total:
+          description: 奖金总额
+          type: number
+        withdrawable:
+          description: 可提现奖金
+          type: number
+        withdrawn:
+          description: 已提现奖金
+          type: number
+        others:
+          description: 其他奖励
+          type: number
+
+    ActivityStaffFinanceTransaction:
+      type: object
+      required: ["title", "desc", "time", "amount"]
+      properties:
+        title:
+          description: 流水标题
+          type: string
+        desc:
+          description: 详情描述
+          type: string
+        time:
+          description: 时间
+          type: number
+        amount:
+          description: 金额
+          type: number
+
+    ActivityMerchantFinanceData:
+      type: object
+      required:
+        [
+          "coupons",
+          "live_orders",
+          "seckill_orders",
+          "stage_rewards",
+          "total_reward",
+          "not_finish_deduct_balance",
+          "budget_balance",
+          "live_red_package_balance",
+        ]
+      properties:
+        coupons:
+          description: 售卡数量
+          type: object
+          required: ["count", "amount"]
+          properties:
+            count:
+              description: 数量
+              type: number
+            amount:
+              description: 金额
+              type: number
+        live_orders:
+          description: 直播签单
+          type: object
+          required: ["count", "amount"]
+          properties:
+            count:
+              description: 数量
+              type: number
+            amount:
+              description: 金额
+              type: number
+        seckill_orders:
+          description: 秒杀
+          type: object
+          required: ["amount"]
+          properties:
+            amount:
+              description: 金额
+              type: number
+        stage_rewards:
+          description: 阶段奖励
+          type: array
+          items:
+            type: object
+            required: ["id", "name", "is_finished", "amount"]
+            properties:
+              id:
+                $ref: "#/components/schemas/Id"
+              name:
+                description: 阶段名称
+                type: string
+              is_finished:
+                description: 是否已完成
+                type: boolean
+              amount:
+                description: 金额
+                type: number
+        total_reward:
+          description: 总奖金
+          type: number
+        not_finish_deduct_balance:
+          description: 纪律任务考核金余额
+          type: number
+        budget_balance:
+          description: 推广费用余额
+          type: object
+          required:
+            ["amount", "forwards", "views", "fissions", "first_order_reward"]
+          properties:
+            amount:
+              description: 金额
+              type: number
+            forwards:
+              description: 转发
+              $ref: "#/components/schemas/ActivityMerchantFinanceBudgetBalanceDetail"
+            views:
+              description: 转发
+              $ref: "#/components/schemas/ActivityMerchantFinanceBudgetBalanceDetail"
+            fissions:
+              description: 裂变
+              $ref: "#/components/schemas/ActivityMerchantFinanceBudgetBalanceDetail"
+            first_order_reward:
+              description: 首单奖励
+              $ref: "#/components/schemas/ActivityMerchantFinanceBudgetBalanceDetail"
+        live_red_package_balance:
+          description: 直播间红包
+          type: number
+
+    ActivityMerchantFinanceBudgetBalanceDetail:
+      type: object
+      description: 推广费用详情
+      required: ["amount", "total", "merchant_count"]
+      properties:
+        amount:
+          description: 金额
+          type: number
+        total:
+          description: 总费用
+          type: number
+        merchant_count:
+          description: 品牌数
+          type: number
+
+    ActivityStageBonusDetail:
+      type: object
+      description: 阶段奖金池详情
+      required: ["merchant", "staff"]
+      properties:
+        merchant:
+          $ref: "#/components/schemas/ActivityStageBonusDetailItem"
+        staff:
+          $ref: "#/components/schemas/ActivityStageBonusDetailItem"
+
+    ActivityStageBonusDetailItem:
+      type: object
+      description: 阶段奖金池详情
+      required: ["amount", "beans", "amount_per_bean"]
+      properties:
+        amount:
+          description: 奖金总额
+          type: number
+        beans:
+          description: 奖励豆数
+          type: number
+        amount_per_bean:
+          description: 当前价值/个
+          type: number
+
+    ActivityStageBonusRankingData:
+      type: object
+      required:
+        [
+          "avatar_url",
+          "name",
+          "merchant_name",
+          "beans",
+          "estimated_amount",
+          "is_finished",
+        ]
+      properties:
+        avatar_url:
+          description: 头像
+          type: string
+        name:
+          description: 名称
+          type: string
+        merchant_name:
+          description: 品牌名称
+          type: string
+        beans:
+          description: 奖励豆数
+          type: number
+        estimated_amount:
+          description: 预计收入
+          type: number
+        is_finished:
+          description: 任务是否完成
+          type: boolean
+        views:
+          description: 浏览
+          $ref: "#/components/schemas/ActivityStageBonusRankingDataDetail"
+        fissions:
+          description: 裂变
+          $ref: "#/components/schemas/ActivityStageBonusRankingDataDetail"
+        collects:
+          description: 集赞
+          $ref: "#/components/schemas/ActivityStageBonusRankingDataDetail"
+        coupons:
+          description: 售卡
+          $ref: "#/components/schemas/ActivityStageBonusRankingDataDetail"
+        self_signs:
+          description: 签单
+          $ref: "#/components/schemas/ActivityStageBonusRankingDataDetail"
+        contribute_signs:
+          description: 贡献签单
+          $ref: "#/components/schemas/ActivityStageBonusRankingDataDetail"
+        live_nums:
+          description: 直播间人数
+          $ref: "#/components/schemas/ActivityStageBonusRankingDataDetail"
+        live_orders:
+          description: 直播间订单数
+          $ref: "#/components/schemas/ActivityStageBonusRankingDataDetail"
+        signups:
+          description: 报名
+          $ref: "#/components/schemas/ActivityStageBonusRankingDataDetail"
+
+    ActivityStageBonusRankingDataDetail:
+      type: object
+      required: ["actual", "required"]
+      properties:
+        actual:
+          description: 实际完成数量
+          type: number
+        required:
+          description: 任务要求完成数量
+          type: number
+
+    ActivityStageBonusMyRankingData:
+      type: object
+      required: ["ranking", "data"]
+      properties:
+        ranking:
+          description: 我的排行
+          type: number
+        data:
+          description: 数据
+          $ref: "#/components/schemas/ActivityStageBonusRankingData"
+
+    ActivityMerchantFinancePunishmentRecord:
+      type: object
+      required: ["reason", "time", "amount", "points"]
+      properties:
+        reason:
+          description: 原因
+          type: string
+        time:
+          description: 时间
+          type: number
+        amount:
+          description: 金额
+          type: number
+        points:
+          description: 积分
+          type: number

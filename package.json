@@ -1,0 +1,16 @@
+{
+  "name": "api-spec",
+  "version": "0.0.13",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "update": "npm version patch",
+    "build:staff": "redoc-cli bundle --output docs/staff-client.html --title 员工端API文档 --disableGoogleFont true specs/staff-client.yml",
+    "build:customer": "redoc-cli bundle --output docs/yun-client.html --title 用户端API文档 --disableGoogleFont true specs/yun-client.yml",
+    "build": "rm -rf docs && npm-run-all --parallel build:*"
+  },
+  "dependencies": {
+    "npm-run-all": "^4.1.5",
+    "redoc-cli": "^0.8.6"
+  }
+}

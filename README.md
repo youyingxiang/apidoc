@@ -1,12 +1,12 @@
 # 文档地址
 
-- [员工端](http://zwyql8.coding-pages.com/docs/staff-client.html)
+- [员工端](http://htmlpreview.github.io/?https://github.com/youyingxiang/apidoc/blob/master/docs/staff-client.html)
 
-- [活动端](http://zwyql8.coding-pages.com/docs/yun-client.html)
+- [活动端](http://htmlpreview.github.io/?https://github.com/youyingxiang/apidoc/blob/master/docs/yun-client.html)
 
 # 这是什么？
 
-这是聚客加项目的 API Specification，它使用 OpenAPI 来描述一个 api 的 url，请求体，请求头，返回头，返回体等。有了这个描述文件，就可以 mock 数据，生成代码，或者用来做 数据校验，测试等等。
+这是项目的 API Specification，它使用 OpenAPI 来描述一个 api 的 url，请求体，请求头，返回头，返回体等。有了这个描述文件，就可以 mock 数据，生成代码，或者用来做 数据校验，测试等等。
 
 # 为什么？
 
